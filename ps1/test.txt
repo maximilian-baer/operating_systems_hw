@@ -1,28 +1,28 @@
 #Hash of concatenation
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ gcc -Wall -o kit kit.c
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ cat kit foo.png | sha1sum
+user@host:~/Uni/OS/ps1$ gcc -Wall -o kit kit.c
+user@host:~/Uni/OS/ps1$ cat kit foo.png | sha1sum
 3371193542a8be6ff9f8b18f5f78f29bb26da7a5  -
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit kit foo.png | sha1sum
+user@host:~/Uni/OS/ps1$ ./kit kit foo.png | sha1sum
 3371193542a8be6ff9f8b18f5f78f29bb26da7a5  -
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit -o out.bin kit foo.png
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ sha1sum out.bin
+user@host:~/Uni/OS/ps1$ ./kit -o out.bin kit foo.png
+user@host:~/Uni/OS/ps1$ sha1sum out.bin
 3371193542a8be6ff9f8b18f5f78f29bb26da7a5  out.bin
 
 #Stdin test
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit -o out.txt - - kit.c
+user@host:~/Uni/OS/ps1$ ./kit -o out.txt - - kit.c
 Hello
 World
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ wc -c out.txt 
+user@host:~/Uni/OS/ps1$ wc -c out.txt 
 2113 out.txt
 
 #Error handling
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit notthere.txt
+user@host:~/Uni/OS/ps1$ ./kit notthere.txt
 kit: Cannot open notthere.txt for reading: No such file or directory
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit /tmp
+user@host:~/Uni/OS/ps1$ ./kit /tmp
 kit: Cannot read /tmp for input: Is a directory
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./ -o /dev/full kit.c
+user@host:~/Uni/OS/ps1$ ./ -o /dev/full kit.c
 bash: ./: Is a directory
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ ./kit -o /dev/full kit.c
+user@host:~/Uni/OS/ps1$ ./kit -o /dev/full kit.c
 kit: Cannot write /dev/full for output: No space left on device
-max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/ps1$ touch test.txt
+user@host:~/Uni/OS/ps1$ touch test.txt
 

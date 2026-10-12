@@ -1,0 +1,67 @@
+#initialize directory test tree
+user@host:~/Uni/OS/ps2$ mkdir -p testdir/dir1 testdir/dir2 testdir/dir3 testdir/dir4 testdir/dir5
+user@host:~/Uni/OS/ps2$ cp scavenger.c testdir/dir1/testtarget
+user@host:~/Uni/OS/ps2$ ln testdir/dir1/testtarget testdir/dir1/hardlink
+user@host:~/Uni/OS/ps2$ cp testdir/dir1/testtarget testdir/dir1/candidate1
+user@host:~/Uni/OS/ps2$ ln testdir/dir1/candidate1 testdir/dir1/candidate3
+user@host:~/Uni/OS/ps2$ cp testdir/dir1/testtarget testdir/dir4/other_name.jpg
+user@host:~/Uni/OS/ps2$ cp testdir/dir1/testtarget testdir/dir4/samesize
+user@host:~/Uni/OS/ps2$ cat scavenger.
+scavenger.c    scavenger.pdf  
+user@host:~/Uni/OS/ps2$ cat scavenger.c scavenger.c > testdir/dir4/longer
+user@host:~/Uni/OS/ps2$ ln -s ../dir1/testtarget testdir/dir2/goodlink
+user@host:~/Uni/OS/ps2$ ln -s ../dir1/candidate1 testdir/dir3/badlink1
+user@host:~/Uni/OS/ps2$ ln -s ../dir2/goodlink testdir/dir3/chainlink
+user@host:~/Uni/OS/ps2$ ln -s ../dir1 testdir/dir1/badlink2
+user@host:~/Uni/OS/ps2$ ln -s does_not_exist testdir/dir4/dangling
+user@host:~/Uni/OS/ps2$ cp testdir/dir1/testtarget testdir/dir5/hidden_dup
+user@host:~/Uni/OS/ps2$ chmod 000 testdir/dir5
+user@host:~/Uni/OS/ps2$ ls -liR testdir/
+testdir/:
+total 20
+12582977 drwxrwxr-x 2 max max 4096 Sep 30 23:08 dir1
+12582978 drwxrwxr-x 2 max max 4096 Sep 30 23:07 dir2
+12582979 drwxrwxr-x 2 max max 4096 Sep 30 23:08 dir3
+12582980 drwxrwxr-x 2 max max 4096 Sep 30 23:09 dir4
+12582981 d--------- 2 max max 4096 Sep 30 23:12 dir5
+
+testdir/dir1:
+total 32
+12582991 lrwxrwxrwx 1 max max    7 Sep 30 23:08 badlink2 -> ../dir1
+12582983 -rw-rw-r-- 2 max max 5931 Sep 30 22:58 candidate1
+12582983 -rw-rw-r-- 2 max max 5931 Sep 30 22:58 candidate3
+12582982 -rw-rw-r-- 2 max max 5931 Sep 30 22:56 hardlink
+12582982 -rw-rw-r-- 2 max max 5931 Sep 30 22:56 testtarget
+
+testdir/dir2:
+total 0
+12582987 lrwxrwxrwx 1 max max 18 Sep 30 23:07 goodlink -> ../dir1/testtarget
+
+testdir/dir3:
+total 0
+12582988 lrwxrwxrwx 1 max max 18 Sep 30 23:07 badlink1 -> ../dir1/candidate1
+12582989 lrwxrwxrwx 1 max max 16 Sep 30 23:08 chainlink -> ../dir2/goodlink
+
+testdir/dir4:
+total 28
+12582992 lrwxrwxrwx 1 max max    14 Sep 30 23:09 dangling -> does_not_exist
+12582986 -rw-rw-r-- 1 max max 11862 Sep 30 23:02 longer
+12582984 -rw-rw-r-- 1 max max  5931 Sep 30 22:59 other_name.jpg
+12582985 -rw-rw-r-- 1 max max  5931 Sep 30 23:00 samesize
+ls: cannot open directory 'testdir/dir5': Permission denied
+
+# run program
+user@host:~/Uni/OS/ps2$ gcc -Wall -Wextra -o scavenger scavenger.c 
+user@host:~/Uni/OS/ps2$ ./scavenger testdir/dir1/testtarget testdir
+testdir/dir3/chainlink SYMLINK RESOLVES TO TARGET
+testdir/dir3/badlink1 SYMLINK (../dir1/candidate1) RESOLVES TO DUPLICATE with nlink=2, dev 0x10305, ino 12582983
+testdir/dir4/other_name.jpg DUPLICATE OF TARGET (nlink=1, dev 0x10305, ino 12582984)
+testdir/dir4/samesize DUPLICATE OF TARGET (nlink=1, dev 0x10305, ino 12582985)
+testdir/dir1/testtarget HARD LINK TO TARGET
+testdir/dir1/candidate3 DUPLICATE OF TARGET (nlink=2, dev 0x10305, ino 12582983)
+testdir/dir1/candidate1 DUPLICATE OF TARGET (nlink=2, dev 0x10305, ino 12582983)
+testdir/dir1/hardlink HARD LINK TO TARGET
+./scavenger: Warning: cannot open directory testdir/dir5: Permission denied
+testdir/dir2/goodlink SYMLINK RESOLVES TO TARGET
+user@host:~/Uni/OS/ps2$ 
+
