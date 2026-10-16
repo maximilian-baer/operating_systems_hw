@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +7,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>   
+#include <time.h>
+#include <sys/resource.h>
 
 
 #define MAX_REDIR 3
@@ -121,8 +125,40 @@ int report_status(pid_t pid, int wstatus) {
     return code;
 }
 
+double ts_diff(struct timespec start, struct timespec end) {
+    return (double)(end.tv_sec - start.tv_sec) 
+        + (double)(end.tv_nsec - start.tv_nsec) / 1e9;
+}
+
+double tv_to_sec(struct timeval tv) {
+    return (double) tv.tv_sec + (double) tv.tv_usec / 1e6;
+}
+
+static int apply_redirs(struct command *cmd) {
+    for (int i = 0; i < cmd->nredir; i++) {
+        struct redir *r = &cmd->redirs[i];
+
+        int fd = open(r->path, r->flags, 0666);
+        if (fd == -1) {
+            fprintf(stderr, "myshell: %s: %s\n", r->path, strerror(errno));
+            return -1;
+        }
+        if (fd != r->fd) {
+            if(dup2(fd, r->fd) == -1) {
+                fprintf(stderr, "myshell: dup2 %s: %s\n", r->path, strerror(errno));
+                close(fd);
+                return -1;
+            }
+            close(fd);
+        }
+    }
+    return 0;
+}
 
 int run_command(struct command *cmd) {
+    struct timespec t_start, t_end;                /* NEU */
+    clock_gettime(CLOCK_MONOTONIC, &t_start);      /* NEU: Zeit direkt vor fork */
+
     pid_t pid = fork();
     if (pid == -1) {
         fprintf(stderr, "myshell: fork: %s\n", strerror(errno));
@@ -130,17 +166,27 @@ int run_command(struct command *cmd) {
     }
 
     if(pid == 0) {
+        if(apply_redirs(cmd) == -1) {
+            _exit(1);
+        }
         execvp(cmd->argv[0], cmd->argv);
         fprintf(stderr, "myshell: %s: %s\n", cmd->argv[0], strerror(errno));
         _exit(127);
     }
 
     int wstatus;
-    if (waitpid(pid, &wstatus, 0) == -1) {
+    struct rusage ru;
+    
+    if (wait4(pid, &wstatus, 0,&ru) == -1) {
         fprintf(stderr, "myshell: waitpid: %s\n", strerror(errno));
         return 1;
     }
-    return report_status(pid, wstatus);
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+
+    int status = report_status(pid, wstatus);
+    fprintf(stderr, "Real: %.3fs User: %.3fs Sys: %.3fs\n", 
+        ts_diff(t_start, t_end), tv_to_sec(ru.ru_utime), tv_to_sec(ru.ru_stime));
+    return status;
 }
 
 enum { NOT_BUILTIN, BUILTIN_DONE, BUILTIN_EXIT};
