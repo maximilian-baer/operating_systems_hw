@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/wait.h>   
+
 
 #define MAX_REDIR 3
 
@@ -103,18 +105,42 @@ int parse_line(char *line, struct command *cmd) {
     return 1;
 }
 
-static void dump_command(const struct command *cmd)
-{
-    fprintf(stderr, "[parse] argc=%d:", cmd->argc);
-    for (int i = 0; i < cmd->argc; i++)
-        fprintf(stderr, " <%s>", cmd->argv[i]);
-    fputc('\n', stderr);
-    for (int i = 0; i < cmd->nredir; i++) {
-        fprintf(stderr, "[parse]   fd %d -> \"%s\" (%s)\n",
-        cmd->redirs[i].fd, cmd->redirs[i].path,
-        cmd->redirs[i].fd == 0 ? "read" :
-        (cmd->redirs[i].flags & O_APPEND) ? "append" : "truncate");
+int report_status(pid_t pid, int wstatus) {
+    if(WIFSIGNALED(wstatus)) {
+        int sig = WTERMSIG(wstatus);
+        fprintf(stderr, "Child process %d exited with signal %d (%s)\n", (int)pid, sig, strsignal(sig));
+        return 128 + sig;
     }
+
+    int code = WEXITSTATUS(wstatus);
+    if (code == 0) {
+        fprintf(stderr, "Child process %d exited normally   \n", (int)pid);
+    } else {
+        fprintf(stderr, "Child process %d exited with return value %d\n", (int)pid, code);
+    }
+    return code;
+}
+
+
+int run_command(struct command *cmd) {
+    pid_t pid = fork();
+    if (pid == -1) {
+        fprintf(stderr, "myshell: fork: %s\n", strerror(errno));
+        return 1;
+    }
+
+    if(pid == 0) {
+        execvp(cmd->argv[0], cmd->argv);
+        fprintf(stderr, "myshell: %s: %s\n", cmd->argv[0], strerror(errno));
+        _exit(127);
+    }
+
+    int wstatus;
+    if (waitpid(pid, &wstatus, 0) == -1) {
+        fprintf(stderr, "myshell: waitpid: %s\n", strerror(errno));
+        return 1;
+    }
+    return report_status(pid, wstatus);
 }
 
 enum { NOT_BUILTIN, BUILTIN_DONE, BUILTIN_EXIT};
@@ -211,7 +237,7 @@ int main(int argc, char const *argv[])
         if (b == BUILTIN_DONE) {
             continue;
         }
-        dump_command(&cmd);
+        last_status = run_command(&cmd);    
     }
     
     // free getline()'s allocated memory
