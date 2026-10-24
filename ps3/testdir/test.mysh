@@ -1,0 +1,4 @@
+# script test
+pwd
+ls -l /proc/self/fd/
+exit 42

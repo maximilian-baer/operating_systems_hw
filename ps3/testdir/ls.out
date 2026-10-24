@@ -1,0 +1,7 @@
+total 28
+-rwxrwxr-x 1 max max 15784 Okt 16 13:16 dumpcore
+-rw-rw-r-- 1 max max    35 Okt 16 13:16 dumpcore.c
+-rw-rw-r-- 1 max max    18 Okt 16 13:16 input.txt
+-rw-rw-r-- 1 max max     0 Okt 16 13:19 ls.out
+-rw-rw-r-- 1 max max    47 Okt 16 13:17 test.mysh
+hello

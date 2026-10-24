@@ -1,0 +1,69 @@
+max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/operating_systems_hw/ps3$ mkdir -p testdir && cd testdir
+max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/operating_systems_hw/ps3/testdir$ printf 'line one\nline two\n' > input.txt
+max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/operating_systems_hw/ps3/testdir$ echo 'int main(void){ return *(int*)0; }' > dumpcore.c && gcc -o dumpcore dumpcore.c
+max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/operating_systems_hw/ps3/testdir$ printf '# script test\npwd\nls -l /proc/self/fd/\nexit 42\n' > test.mysh
+max@max-ThinkPad-T14s-Gen-3:~/Uni/OS/operating_systems_hw/ps3/testdir$ ../myshell 
+cd /tmp
+
+pwd
+/tmp
+
+cd /home/max/Uni/OS/operating_systems_hw/ps3/testdir
+
+ls -l >ls.out
+Child process 35898 exited normally   
+Real: 0.003s User: 0.001s Sys: 0.002s
+
+cat ls.out
+total 28
+-rwxrwxr-x 1 max max 15784 Okt 16 13:16 dumpcore
+-rw-rw-r-- 1 max max    35 Okt 16 13:16 dumpcore.c
+-rw-rw-r-- 1 max max    18 Okt 16 13:16 input.txt
+-rw-rw-r-- 1 max max     0 Okt 16 13:19 ls.out
+-rw-rw-r-- 1 max max    47 Okt 16 13:17 test.mysh
+Child process 35913 exited normally   
+Real: 0.002s User: 0.000s Sys: 0.002s
+
+ls asdfaadsfsadg 
+ls: cannot access 'asdfaadsfsadg': No such file or directory
+Child process 35929 exited with return value 2
+Real: 0.002s User: 0.000s Sys: 0.002s
+
+./dumpcore
+Child process 35931 exited with signal 11 (Segmentation fault)
+Real: 1.153s User: 0.000s Sys: 0.002s
+
+sleep 1
+Child process 35951 exited normally   
+Real: 1.002s User: 0.000s Sys: 0.002s
+
+echo hello >>ls.out
+Child process 35988 exited normally   
+Real: 0.002s User: 0.000s Sys: 0.002s
+
+wc -l <input.txt
+2
+Child process 36004 exited normally   
+Real: 0.002s User: 0.000s Sys: 0.002s
+
+ls /nonexistent 2>err.txt
+Child process 36026 exited with return value 2
+Real: 0.002s User: 0.000s Sys: 0.002s
+
+cat err.txt
+ls: cannot access '/nonexistent': No such file or directory
+Child process 36042 exited normally   
+Real: 0.002s User: 0.001s Sys: 0.001s
+
+../myshell test.mysh
+/home/max/Uni/OS/operating_systems_hw/ps3/testdir
+total 0
+lrwx------ 1 max max 64 Okt 16 13:22 0 -> /dev/pts/1
+lrwx------ 1 max max 64 Okt 16 13:22 1 -> /dev/pts/1
+lrwx------ 1 max max 64 Okt 16 13:22 2 -> /dev/pts/1
+lr-x------ 1 max max 64 Okt 16 13:22 3 -> /proc/36071/fd
+Child process 36071 exited normally   
+Real: 0.002s User: 0.000s Sys: 0.002s
+Child process 36070 exited with return value 42
+Real: 0.004s User: 0.000s Sys: 0.004s
+exit

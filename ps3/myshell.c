@@ -13,12 +13,14 @@
 
 #define MAX_REDIR 3
 
+// represents a single redirection operation
 struct redir {
     int fd;
     int flags;
     const char *path;
 };
 
+// stores a fully parsed command including all arguments and redirection operations
 struct command {
     char *argv[256];
     int argc;
@@ -41,6 +43,7 @@ redir_ops[] = {
 };
 
 struct redir_op *match_redir(char *tok) {
+    // 5 possible redirection operators
     int n_ops = sizeof(redir_ops) / sizeof(redir_ops[0]);
     for (int i = 0; i < n_ops; i++) {
         if(strncmp(tok, redir_ops[i].prefix, strlen(redir_ops[i].prefix)) == 0) {
@@ -51,11 +54,12 @@ struct redir_op *match_redir(char *tok) {
     return NULL;
 }
 
+// parses the input line into the actual command and its arguments and extracts all redirections
 int parse_line(char *line, struct command *cmd) {
     cmd->argc = 0;
     cmd->nredir = 0;
 
-    // regard comments
+    // skip comments
     if(line[0] == '#') {
         return 0;
     }
@@ -111,6 +115,7 @@ int parse_line(char *line, struct command *cmd) {
 
 int report_status(pid_t pid, int wstatus) {
     if(WIFSIGNALED(wstatus)) {
+        // case terminated by signal
         int sig = WTERMSIG(wstatus);
         fprintf(stderr, "Child process %d exited with signal %d (%s)\n", (int)pid, sig, strsignal(sig));
         return 128 + sig;
@@ -118,8 +123,10 @@ int report_status(pid_t pid, int wstatus) {
 
     int code = WEXITSTATUS(wstatus);
     if (code == 0) {
+        // case terminated normally with exit code 0
         fprintf(stderr, "Child process %d exited normally   \n", (int)pid);
     } else {
+        // case non-zero exit code
         fprintf(stderr, "Child process %d exited with return value %d\n", (int)pid, code);
     }
     return code;
@@ -156,8 +163,8 @@ static int apply_redirs(struct command *cmd) {
 }
 
 int run_command(struct command *cmd) {
-    struct timespec t_start, t_end;                /* NEU */
-    clock_gettime(CLOCK_MONOTONIC, &t_start);      /* NEU: Zeit direkt vor fork */
+    struct timespec t_start, t_end;               
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
 
     pid_t pid = fork();
     if (pid == -1) {
@@ -169,7 +176,10 @@ int run_command(struct command *cmd) {
         if(apply_redirs(cmd) == -1) {
             _exit(1);
         }
+        // replace current program with requested command
+        // file descriptors are preserved across execvp() call
         execvp(cmd->argv[0], cmd->argv);
+        // execvp() only returns if an error occurs
         fprintf(stderr, "myshell: %s: %s\n", cmd->argv[0], strerror(errno));
         _exit(127);
     }
@@ -191,6 +201,8 @@ int run_command(struct command *cmd) {
 
 enum { NOT_BUILTIN, BUILTIN_DONE, BUILTIN_EXIT};
 
+// runs a builtin command if it is one and returns the exit status of the command
+// must run in parent process since it may change the current working directory of the shell
 int run_builtin(struct command *cmd, int *status) {
     char *name = cmd->argv[0];
 
