@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // convert arguments into ascii 
+    // convert ascii arguments to integers 
     int write_size = atoi(argv[1]);
     int iterations = atoi(argv[2]);
     int restart = 0;
@@ -178,11 +178,11 @@ int main(int argc, char *argv[]) {
             break;
         }
         if (kill(writer_pid, SIGUSR1) == -1) {
-            if (errno == ESRCH) {
-                printf("kill returned ESRCH, writer is done\n");
-                break;
-            }
+            perror("Error while sending SIGUSR1 to writer");
+            break;
         }
+            
+        
         signals_sent++;
         nanosleep(&delay, NULL);
     }
